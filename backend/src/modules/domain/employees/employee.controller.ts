@@ -49,7 +49,7 @@ export class EmployeeController {
   ): Promise<Employee> {
     const employee = await this.employeeRepository.findByNames(
       employeeRequest.firstName,
-      employeeRequest.middleName,x
+      employeeRequest.middleName,
       employeeRequest.lastName,
       employeeRequest.secondLastName,
     );
