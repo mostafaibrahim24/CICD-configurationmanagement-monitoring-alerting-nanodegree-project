@@ -10,11 +10,15 @@ commands:
           command: |
             aws cloudformation delete-stack --stack-name "udapeople-backend-${CIRCLE_WORKFLOW_ID:0:7}" ;
             aws cloudformation delete-stack --stack-name "udapeople-frontend-${CIRCLE_WORKFLOW_ID:0:7}"
-  destroy-environment-install-awscli:
+  install-awscli:
+    parameters:
+      when:
+        type: string
+        default: "always"
     steps:
       - run:
           name: Install AWS CLI
-          when: on_fail
+          when: << parameters.when >>
           command: |
             curl "https://awscli.amazonaws.com/awscli-exe-linux-x86_64.zip" -o "awscliv2.zip"
             unzip awscliv2.zip
@@ -220,7 +224,39 @@ jobs:
                 echo "Migration failed. Sending (0) to ${MIGRATION_STATUS_URL}"
                 curl -k ${MIGRATION_STATUS_URL}  -d '0'
             fi
-      - destroy-environment-install-awscli
+      - install-awscli:
+          when: on_fail
+      - destroy-environment
+      - slack/notify:
+          event: fail
+          template: basic_fail_1
+  deploy-frontend:
+    docker:
+      - image: circleci/node:13.8.0
+    steps:
+      # Checkout code from git
+      - checkout
+      - install-awscli
+      - restore_cache:
+          keys: [frontend-build]
+      - run:
+          name: Get Backend URL (API URL)
+          command: |
+            BACKEND_BASE_URL=$(aws ec2 describe-instances \
+              --query 'Reservations[*].Instances[*].PublicDnsName' \
+              --filters "Name=tag:project,Values=udapeople-backend" \
+              --output text)
+            export API_URL="http://${BACKEND_BASE_URL}:3030"
+            echo API_URL="http://${BACKEND_IP}:3030" >> frontend/.env
+            cat frontend/.env
+      - run:
+          name: Deploy frontend objects
+          command: |
+            cd frontend
+            npm install
+            npm run build
+            tar -czvf artifact-"${CIRCLE_WORKFLOW_ID:0:7}".tar.gz dist
+            aws s3 cp dist s3://udapeople-${CIRCLE_WORKFLOW_ID:0:7} --recursive
       - destroy-environment
       - slack/notify:
           event: fail
@@ -241,8 +277,10 @@ workflows:
       - scan-frontend:
           requires: [build-frontend]
       - deploy-infrastructure:
-          requires: [build-frontend, build-backend, test-frontend, test-backend, scan-backend, scan-frontend]
+          requires: [test-frontend, test-backend, scan-backend, scan-frontend]
       - configure-infrastructure:
           requires: [deploy-infrastructure]
       - run-migrations:
           requires: [configure-infrastructure]
+      - deploy-frontend:
+          requires: [run-migrations]
