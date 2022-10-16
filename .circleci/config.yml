@@ -171,7 +171,7 @@ jobs:
   configure-infrastructure:
     docker:
       # Docker image here that supports Ansible
-      - image: python:3.7-alpine3.11
+      - image: cimg/python:3.10.4
     steps:
       - checkout
       # Add ssh keys with fingerprint
@@ -183,14 +183,10 @@ jobs:
       - run:
           name: Install dependencies
           command: |
-            apk add --no-cache \
-                python3 \
-                py3-pip \
-            && pip3 install --upgrade pip \
-            && pip3 install --no-cache-dir \
-                awscli \
-            && rm -rf /var/cache/apk/*
-            apk add --update ansible
+            python3 -m pip install --upgrade --user pip
+            python3 -m pip install --upgrade --user awscli
+            python3 -m pip install --upgrade --user ansible
+            ansible --version
       - run:
           name: Configure server
           command: |
@@ -286,15 +282,19 @@ jobs:
           command: |
             apk add --update nodejs npm
       - run:
-          name: Deploy backend
+          name: Build
+          working_directory: .
           command: |
             cd backend
             npm install
             npm run build
             cd ..
-            # Zip the directory
             tar -C backend -czvf artifact.tar.gz .
-            cd .circleci/ansible
+
+      - run:
+          name: Deploy backend
+          working_directory: ./.circleci/ansible
+          command: |
             echo "Contents  of the inventory.txt file is -------"
             cat inventory.txt
             ansible-playbook -i inventory.txt deploy-backend.yml
@@ -312,18 +312,18 @@ jobs:
 workflows:
   default:
     jobs:
-      - build-frontend
-      - build-backend
-      - test-frontend:
-          requires: [build-frontend]
-      - test-backend:
-          requires: [build-backend]
-      - scan-backend:
-          requires: [build-backend]
-      - scan-frontend:
-          requires: [build-frontend]
-      - deploy-infrastructure:
-          requires: [test-frontend, test-backend, scan-backend, scan-frontend]
+      #- build-frontend
+      #- build-backend
+      #- test-frontend:
+       #   requires: [build-frontend]
+      #- test-backend:
+       #   requires: [build-backend]
+      #- scan-backend:
+       #   requires: [build-backend]
+      #- scan-frontend:
+       #   requires: [build-frontend]
+      - deploy-infrastructure #:
+        #  requires: [test-frontend, test-backend, scan-backend, scan-frontend]
       - configure-infrastructure:
           requires: [deploy-infrastructure]
       - run-migrations:

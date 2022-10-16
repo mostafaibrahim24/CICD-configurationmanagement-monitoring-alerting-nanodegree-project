@@ -1,17 +1,42 @@
 ---
-- name: "apt upgrade packages"
+- name: "Install python3"
   become: true
   apt:
-    upgrade: "yes"
-- name: "Install node.js"
+    name: ["python3"]
+    state: latest
+    update_cache: true
+
+- name: "apt upgrade"
   become: true
-  shell: |
-    curl -fsSL https://deb.nodesource.com/setup_lts.x | sudo -E bash -
-    sudo apt install nodejs -y
-- name: "install pm2 (process manager)"
+  apt:
+    upgrade: true
+
+- name: "Autoremove"
+  become: true
+  apt:
+    autoremove: true
+
+- name: "Install node and npm"
+  become: true
+  apt:
+    name: ["nodejs", "npm"]
+    state: latest
+
+- name: "Install n"
+  become: true
+  npm:
+    name: n
+    global: true
+    production: true
+
+- name: "Switch node to version v13.8.0"
+  become: true
+  shell: n 13.8.0
+  
+- name: "Install PM2"
   become: true
   npm:
     name: pm2
+    global: true
+    production: true
     state: present
-    global: yes
-    production: yes
