@@ -5,9 +5,10 @@ commands:
   destroy-environment:
     steps:
       - run:
-          name: Destroy environment/stack on failure  (Rollback)
+          name: Destroy environment (bucket and stacks) on failure  (Rollback)
           when: on_fail
           command: |
+            aws s3 rm "s3://udapeople-${CIRCLE_WORKFLOW_ID:0:7}" --recursive ;
             aws cloudformation delete-stack --stack-name "udapeople-backend-${CIRCLE_WORKFLOW_ID:0:7}" ;
             aws cloudformation delete-stack --stack-name "udapeople-frontend-${CIRCLE_WORKFLOW_ID:0:7}"
   install-awscli:
@@ -232,6 +233,8 @@ jobs:
     steps:
       # Checkout code from git
       - checkout
+      - attach_workspace:
+          at: .
       - install-awscli
       - restore_cache:
           keys: [frontend-build]
@@ -243,8 +246,12 @@ jobs:
               --filters "Name=tag:project,Values=udapeople-backend" \
               --output text)
             export API_URL="http://${BACKEND_BASE_URL}:3030"
-            echo API_URL="http://${BACKEND_IP}:3030" >> frontend/.env
+            echo  export API_URL="http://${BACKEND_BASE_URL}:3030" >> frontend/.env
             cat frontend/.env
+      - persist_to_workspace:
+          root: .
+          paths:
+            - frontend/.env
       - run:
           name: Deploy frontend objects
           command: |
@@ -307,6 +314,43 @@ jobs:
       - slack/notify:
           event: fail
           template: basic_fail_1
+  smoke-test:
+    docker:
+      - image: cimg/node:13.8.0
+    steps:
+      - checkout
+      - install-awscli
+      - attach_workspace:
+          at: .
+      - run:
+          name: Get backend url and smoke test backend
+          working_directory: ./frontend
+          command: |
+            source .env
+            echo ${API_URL}
+          # if curl -s ${API_URL}/api/status | grep -q "ok"
+          # then
+            # exit 0
+          # else
+            # exit 1
+          # fi
+    #(curl ${API_URL}/api/status | grep -q "ok"  && exit 0) || (exit 1)
+            
+      - run:
+          name: Frontend smoke test.
+          command: |
+            FRONTEND_URL="http://udapeople-${CIRCLE_WORKFLOW_ID:0:7}.s3-website-${AWS_DEFAULT_REGION}.amazonaws.com"
+            if curl -s ${FRONTEND_URL} | grep -q "Welcome"
+            then
+                exit 1
+            else
+                exit 1
+            fi
+      - destroy-environment
+      - slack/notify:
+          event: fail
+          template: basic_fail_1
+
       
       
 workflows:
@@ -332,3 +376,5 @@ workflows:
           requires: [run-migrations]
       - deploy-backend:
           requires: [run-migrations]
+      - smoke-test:
+          requires: [deploy-frontend, deploy-backend]

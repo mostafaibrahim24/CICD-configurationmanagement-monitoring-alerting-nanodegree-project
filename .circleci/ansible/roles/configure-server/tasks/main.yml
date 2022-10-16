@@ -6,16 +6,6 @@
     state: latest
     update_cache: true
 
-- name: "apt upgrade"
-  become: true
-  apt:
-    upgrade: true
-
-- name: "Autoremove"
-  become: true
-  apt:
-    autoremove: true
-
 - name: "Install node and npm"
   become: true
   apt:

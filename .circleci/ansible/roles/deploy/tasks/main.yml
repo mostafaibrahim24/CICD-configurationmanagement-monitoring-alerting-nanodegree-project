@@ -1,17 +1,17 @@
 ---
-- name: "create project dir"
+- name: "Create a directory for backend"
   shell: mkdir ~/backend
 
-- name: "send build artifact to remote"
+- name: "Send backend artifact"
   unarchive:
     src: ../../artifact.tar.gz
     dest: ~/backend
 
-- name: "install backend artifacts"
+- name: "Install"
   npm:
     path: ~/backend
     production: true
     global: true
 
-- name: "start the app"
+- name: "Start things up"
   shell: cd ~/backend && pm2 stop all; pm2 start npm -- run start
