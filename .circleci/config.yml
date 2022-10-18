@@ -277,7 +277,7 @@ jobs:
               --filters "Name=tag:project,Values=udapeople-backend" \
               --output text)
             export API_URL="http://${BACKEND_BASE_URL}:3030"
-            echo  export API_URL="http://${BACKEND_BASE_URL}:3030" >> frontend/.env
+            echo  API_URL="http://${BACKEND_BASE_URL}:3030" > frontend/.env
             cat frontend/.env
       - persist_to_workspace:
           root: .
@@ -361,14 +361,15 @@ jobs:
           name: Get backend url and smoke test backend
           working_directory: ./frontend
           command: |
-            source .env
-            echo ${API_URL}
-          # if curl -s ${API_URL}/api/status | grep -q "ok"
-          # then
-            # exit 0
-          # else
-            # exit 1
-          # fi
+           sleep 60
+           source .env
+           echo ${API_URL}
+           if curl -s ${API_URL}/api/status | grep -q "ok"
+           then
+             exit 0
+           else
+             exit 1
+           fi
     #(curl ${API_URL}/api/status | grep -q "ok"  && exit 0) || (exit 1)
             
       - run:
@@ -409,7 +410,42 @@ jobs:
       - slack/notify:
           event: fail
           template: basic_fail_1
-
+  cleanup:
+      docker:
+        # Docker image here
+        - image: circleci/node:13.8.0
+      steps:
+        # Checkout code from git
+        - checkout
+        - install-awscli
+        - run:
+            name: Get old stack workflow id
+            command: |
+              export OldWorkflowID=$(aws cloudformation \
+                      list-exports --query "Exports[?Name==\`WorkflowID\`].Value" \
+                      --no-paginate --output text)
+              echo OldWorkflowID "${OldWorkflowID}"
+              echo CIRCLE_WORKFLOW_ID "${CIRCLE_WORKFLOW_ID:0:7}"
+  
+              export STACKS=($(aws cloudformation list-stacks --query "StackSummaries[*].StackName" \
+                      --stack-status-filter CREATE_COMPLETE --no-paginate --output text)) 
+              echo Stack names: "${STACKS[@]}" 
+        - run:
+            name: Remove old stacks and files
+            command: |
+              if [[ "${CIRCLE_WORKFLOW_ID:0:7}" != "${OldWorkflowID}" ]]
+              then
+                echo "Cleaning up..."
+                aws s3 rm "s3://${OldWorkflowID}" --recursive
+                aws cloudformation delete-stack --stack-name "${STACKS[0]}" ;
+                aws cloudformation delete-stack --stack-name "${STACKS[1]}"
+              else
+                echo "No stacks or bucket to clean up"
+              fi
+        - slack/notify:
+            event: fail
+            template: basic_fail_1
+  
       
       
 workflows:
@@ -439,4 +475,6 @@ workflows:
           requires: [deploy-frontend, deploy-backend]
       - cloudfront-update:
           requires: [smoke-test]
+      - cleanup:
+          requires: [cloudfront-update] 
       
