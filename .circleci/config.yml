@@ -2,13 +2,24 @@ version: 2.1
 orbs:
   slack: circleci/slack@4.10.1
 commands:
+  empty-s3-bucket:
+    parameters:
+      when:
+        type: string
+        default: on_fail
+    steps:
+      - run:
+          name: Empty s3 bucket on fail
+          when: << parameters.when >>
+          command: |
+            aws s3 rm "s3://udapeople-${CIRCLE_WORKFLOW_ID:0:7}" --recursive ;
+
   destroy-environment:
     steps:
       - run:
-          name: Destroy environment (bucket and stacks) on failure  (Rollback)
+          name: Destroy environment (stacks) on failure  (Rollback)
           when: on_fail
           command: |
-            aws s3 rm "s3://udapeople-${CIRCLE_WORKFLOW_ID:0:7}" --recursive ;
             aws cloudformation delete-stack --stack-name "udapeople-backend-${CIRCLE_WORKFLOW_ID:0:7}" ;
             aws cloudformation delete-stack --stack-name "udapeople-frontend-${CIRCLE_WORKFLOW_ID:0:7}"
   install-awscli:
@@ -24,6 +35,23 @@ commands:
             curl "https://awscli.amazonaws.com/awscli-exe-linux-x86_64.zip" -o "awscliv2.zip"
             unzip awscliv2.zip
             sudo ./aws/install
+  revert-migrations:
+    parameters:
+      when:
+        type: string
+        default: on_fail
+    steps:
+      - run:
+          name: Revert migrations
+          when: << parameters.when >>
+          command: |
+            SUCCESS=$(curl --insecure https://kvdb.io/SQaF3btUos2KjYdFvqpTf6/migration_${CIRCLE_WORKFLOW_ID:0:7})
+            if (( $SUCCESS == 1 ));
+            then
+                cd ~/project/backend
+                npm install
+                npm run migration:revert
+            fi 
 jobs:
   build-frontend:
     docker:
@@ -165,6 +193,7 @@ jobs:
           root: ~/
           paths:
             - project/.circleci/ansible/inventory.txt
+      - empty-s3-bucket
       - destroy-environment
       - slack/notify:
           event: fail
@@ -193,6 +222,7 @@ jobs:
           command: |
             cd .circleci/ansible
             ansible-playbook -i inventory.txt configure-server.yml
+      - empty-s3-bucket
       - destroy-environment
       - slack/notify:
           event: fail
@@ -223,6 +253,7 @@ jobs:
             fi
       - install-awscli:
           when: on_fail
+      - empty-s3-bucket
       - destroy-environment
       - slack/notify:
           event: fail
@@ -260,7 +291,9 @@ jobs:
             npm run build
             tar -czvf artifact-"${CIRCLE_WORKFLOW_ID:0:7}".tar.gz dist
             aws s3 cp dist s3://udapeople-${CIRCLE_WORKFLOW_ID:0:7} --recursive
+      - empty-s3-bucket
       - destroy-environment
+      - revert-migrations
       - slack/notify:
           event: fail
           template: basic_fail_1
@@ -277,9 +310,9 @@ jobs:
       - attach_workspace:
           at: ~/
       - run:
-          name: Install tar and gzip
+          name: Install gzip tar curl
           command: |
-            apk add --update gzip tar
+            apk add --update gzip tar curl
       - run:
           name: Install ansible
           command: |
@@ -310,7 +343,9 @@ jobs:
           when: on_fail
           command: |
             pip3 install awscli
+      - empty-s3-bucket
       - destroy-environment
+      - revert-migrations
       - slack/notify:
           event: fail
           template: basic_fail_1
@@ -346,7 +381,9 @@ jobs:
             else
                 exit 1
             fi
+      - empty-s3-bucket
       - destroy-environment
+      - revert-migrations
       - slack/notify:
           event: fail
           template: basic_fail_1
@@ -378,3 +415,4 @@ workflows:
           requires: [run-migrations]
       - smoke-test:
           requires: [deploy-frontend, deploy-backend]
+      
