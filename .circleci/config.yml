@@ -277,12 +277,12 @@ jobs:
               --filters "Name=tag:project,Values=udapeople-backend" \
               --output text)
             export API_URL="http://${BACKEND_BASE_URL}:3030"
-            echo  API_URL="http://${BACKEND_BASE_URL}:3030" > frontend/.env
-            cat frontend/.env
+            echo http://${BACKEND_BASE_URL}:3030 > frontend/apiurl.txt
+            cat frontend/apiurl.txt
       - persist_to_workspace:
           root: .
           paths:
-            - frontend/.env
+            - frontend/apiurl.txt
       - run:
           name: Deploy frontend objects
           command: |
@@ -361,22 +361,21 @@ jobs:
           name: Get backend url and smoke test backend
           working_directory: ./frontend
           command: |
-           sleep 60
-           source .env
+           API_URL=$(<apiurl.txt)
            echo ${API_URL}
-           if curl -s ${API_URL}/api/status | grep -q "ok"
-           then
-             exit 0
-           else
-             exit 1
-           fi
+          #if curl ${API_URL}/api/status | grep -q "ok"
+          #then
+            #exit 0
+          #else
+            #exit 1
+          #fi
     #(curl ${API_URL}/api/status | grep -q "ok"  && exit 0) || (exit 1)
             
       - run:
           name: Frontend smoke test.
           command: |
             FRONTEND_URL="http://udapeople-${CIRCLE_WORKFLOW_ID:0:7}.s3-website-${AWS_DEFAULT_REGION}.amazonaws.com"
-            if curl -s ${FRONTEND_URL} | grep -q "Welcome"
+            if curl ${FRONTEND_URL} | grep -q "Welcome"
             then
                 exit 0
             else
@@ -436,7 +435,7 @@ jobs:
               if [[ "${CIRCLE_WORKFLOW_ID:0:7}" != "${OldWorkflowID}" ]]
               then
                 echo "Cleaning up..."
-                aws s3 rm "s3://${OldWorkflowID}" --recursive
+                aws s3 rm "s3://udapeople-${OldWorkflowID}" --recursive
                 aws cloudformation delete-stack --stack-name "${STACKS[0]}" ;
                 aws cloudformation delete-stack --stack-name "${STACKS[1]}"
               else
