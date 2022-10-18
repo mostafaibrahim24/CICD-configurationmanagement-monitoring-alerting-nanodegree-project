@@ -351,7 +351,7 @@ jobs:
           template: basic_fail_1
   smoke-test:
     docker:
-      - image: cimg/node:13.8.0
+      - image: circleci/node:13.8.0
     steps:
       - checkout
       - install-awscli
@@ -377,10 +377,32 @@ jobs:
             FRONTEND_URL="http://udapeople-${CIRCLE_WORKFLOW_ID:0:7}.s3-website-${AWS_DEFAULT_REGION}.amazonaws.com"
             if curl -s ${FRONTEND_URL} | grep -q "Welcome"
             then
-                exit 1
+                exit 0
             else
                 exit 1
             fi
+      - empty-s3-bucket
+      - destroy-environment
+      - revert-migrations
+      - slack/notify:
+          event: fail
+          template: basic_fail_1
+  cloudfront-update:
+    docker:
+      # Docker image here that supports AWS CLI
+      - image: circleci/node:13.8.0
+    steps:
+      # Checkout code from git
+      - checkout
+      - install-awscli
+      - run:
+          name: Update cloudfront distribution
+          command: |
+            aws cloudformation deploy \
+              --template-file .circleci/files/cloudfront.yml \
+              --stack-name InitialStack \
+              --parameter-overrides WorkflowID="udapeople-${CIRCLE_WORKFLOW_ID:0:7}" \
+              --tags project=udapeople
       - empty-s3-bucket
       - destroy-environment
       - revert-migrations
@@ -415,4 +437,6 @@ workflows:
           requires: [run-migrations]
       - smoke-test:
           requires: [deploy-frontend, deploy-backend]
+      - cloudfront-update:
+          requires: [smoke-test]
       
