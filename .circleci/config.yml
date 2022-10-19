@@ -1,7 +1,10 @@
 version: 2.1
+
 orbs:
   slack: circleci/slack@4.10.1
+
 commands:
+  # To empty the s3 bucket before the deletion
   empty-s3-bucket:
     parameters:
       when:
@@ -13,7 +16,7 @@ commands:
           when: << parameters.when >>
           command: |
             aws s3 rm "s3://udapeople-${CIRCLE_WORKFLOW_ID:0:7}" --recursive ;
-
+  # Destroy stacks on failure
   destroy-environment:
     steps:
       - run:
@@ -22,6 +25,7 @@ commands:
           command: |
             aws cloudformation delete-stack --stack-name "udapeople-backend-${CIRCLE_WORKFLOW_ID:0:7}" ;
             aws cloudformation delete-stack --stack-name "udapeople-frontend-${CIRCLE_WORKFLOW_ID:0:7}"
+  # Install AWS CLI
   install-awscli:
     parameters:
       when:
@@ -35,6 +39,7 @@ commands:
             curl "https://awscli.amazonaws.com/awscli-exe-linux-x86_64.zip" -o "awscliv2.zip"
             unzip awscliv2.zip
             sudo ./aws/install
+  # Revert migrations
   revert-migrations:
     parameters:
       when:
@@ -51,12 +56,17 @@ commands:
                 cd ~/project/backend
                 npm install
                 npm run migration:revert
-            fi 
+            fi
+
+
 jobs:
+
+
   build-frontend:
     docker:
       - image: circleci/node:13.8.0
     steps:
+      # Checkout code from git
       - checkout
       - restore_cache:
           keys: [frontend-build]
@@ -69,13 +79,17 @@ jobs:
       - save_cache:
           paths: [frontend/node_modules]
           key: frontend-build
+      # CircleCI notifies on job failure
       - slack/notify:
           event: fail
           template: basic_fail_1
+
+
   build-backend:
     docker:
       - image: circleci/node:13.8.0
     steps:
+      # Checkout code from git
       - checkout
       - restore_cache:
           keys: [backend-build]
@@ -88,13 +102,17 @@ jobs:
       - save_cache:
           paths: [backend/node_modules]
           key: backend-build
+      # CircleCI notifies on job failure
       - slack/notify:
           event: fail
           template: basic_fail_1
+
+
   test-frontend:
     docker:
       - image: circleci/node:13.8.0
     steps:
+      # Checkout code from git
       - checkout
       - restore_cache:
           keys: [frontend-build]
@@ -104,13 +122,17 @@ jobs:
             cd frontend
             npm install
             npm run test
+      # CircleCI notifies on job failure
       - slack/notify:
           event: fail
           template: basic_fail_1
+
+
   test-backend:
     docker:
       - image: circleci/node:13.8.0
     steps:
+      # Checkout code from git
       - checkout
       - restore_cache:
           keys: [build-backend]
@@ -120,13 +142,17 @@ jobs:
             cd backend
             npm install
             npm run test
+      # CircleCI notifies on job failure
       - slack/notify:
           event: fail
           template: basic_fail_1
+
+
   scan-frontend:
     docker:
       - image: circleci/node:13.8.0
     steps:
+      # Checkout code from git
       - checkout
       - restore_cache:
           keys: [frontend-build]
@@ -136,13 +162,17 @@ jobs:
             cd frontend
             npm install
             npm audit fix --audit-level=critical --force
+      # CircleCI notifies on job failure
       - slack/notify:
           event: fail
           template: basic_fail_1
+
+
   scan-backend:
     docker:
       - image: circleci/node:13.8.0
     steps:
+      # Checkout code from git
       - checkout
       - restore_cache:
           keys: [backend-build]
@@ -152,16 +182,19 @@ jobs:
             cd backend
             npm install
             npm audit fix --audit-level=critical --force
+      # CircleCI notifies on job failure
       - slack/notify:
           event: fail
           template: basic_fail_1
+
+
   deploy-infrastructure:
     docker:
-      # Docker image here that supports AWS CLI
       - image: amazon/aws-cli
     steps:
       # Checkout code from git
       - checkout
+      # Installing Dependencies
       - run:
           name: install tar and gzip
           command: |
@@ -193,23 +226,28 @@ jobs:
           root: ~/
           paths:
             - project/.circleci/ansible/inventory.txt
+      # Empty S3 Bucket on job failure
       - empty-s3-bucket
+      # Destroy the stacks
       - destroy-environment
+      # CircleCI notifies on job failure
       - slack/notify:
           event: fail
           template: basic_fail_1
+
+
   configure-infrastructure:
     docker:
-      # Docker image here that supports Ansible
       - image: cimg/python:3.10.4
     steps:
+      # Checkout code from git
       - checkout
       # Add ssh keys with fingerprint
       - add_ssh_keys:
           fingerprints: ["81:5f:4b:af:92:fc:3e:bd:f5:bc:d3:34:a7:e2:c2:0b"]
-      # attach workspace
       - attach_workspace:
           at: ~/
+      # Installing Dependencies
       - run:
           name: Install dependencies
           command: |
@@ -222,16 +260,21 @@ jobs:
           command: |
             cd .circleci/ansible
             ansible-playbook -i inventory.txt configure-server.yml
+      # Empty S3 Bucket on job failure
       - empty-s3-bucket
+      # Destroy the stacks
       - destroy-environment
+      # CircleCI notifies on job failure
       - slack/notify:
           event: fail
           template: basic_fail_1
     
+
   run-migrations:
     docker:
       - image: circleci/node:13.8.0
     steps:
+      # Checkout code from git
       - checkout
       - run:
           name: Run migrations
@@ -251,13 +294,19 @@ jobs:
                 echo "Migration failed. Sending (0) to ${MIGRATION_STATUS_URL}"
                 curl -k ${MIGRATION_STATUS_URL}  -d '0'
             fi
+      # Install AWS CLI on failure (to use it in destroying the stacks)
       - install-awscli:
           when: on_fail
+      # Empty S3 Bucket on job failure
       - empty-s3-bucket
+      # Destroy the stacks
       - destroy-environment
+      # CircleCI notifies on job failure
       - slack/notify:
           event: fail
           template: basic_fail_1
+
+
   deploy-frontend:
     docker:
       - image: circleci/node:13.8.0
@@ -266,18 +315,19 @@ jobs:
       - checkout
       - attach_workspace:
           at: .
+      # Install AWS CLI
       - install-awscli
       - restore_cache:
           keys: [frontend-build]
       - run:
           name: Get Backend URL (API URL)
           command: |
-            BACKEND_BASE_URL=$(aws ec2 describe-instances \
-              --query 'Reservations[*].Instances[*].PublicDnsName' \
+            BACKEND_IP_BASE_URL=$(aws ec2 describe-instances \
+              --query 'Reservations[*].Instances[*].PublicIpAddress' \
               --filters "Name=tag:project,Values=udapeople-backend" \
               --output text)
-            export API_URL="http://${BACKEND_BASE_URL}:3030"
-            echo http://${BACKEND_BASE_URL}:3030 > frontend/apiurl.txt
+            export API_URL="http://${BACKEND_IP_BASE_URL}:3030"
+            echo "http://${BACKEND_IP_BASE_URL}:3030" > frontend/apiurl.txt
             cat frontend/apiurl.txt
       - persist_to_workspace:
           root: .
@@ -291,12 +341,18 @@ jobs:
             npm run build
             tar -czvf artifact-"${CIRCLE_WORKFLOW_ID:0:7}".tar.gz dist
             aws s3 cp dist s3://udapeople-${CIRCLE_WORKFLOW_ID:0:7} --recursive
+      # Empty S3 Bucket on job failure
       - empty-s3-bucket
+      # Destroy the stacks
       - destroy-environment
+      # Revert migrations done in run migrations job
       - revert-migrations
+      # CircleCI notifies on job failure
       - slack/notify:
           event: fail
           template: basic_fail_1
+
+
   deploy-backend:
     docker:
       - image: python:3.7-alpine3.11
@@ -306,9 +362,9 @@ jobs:
       # Add ssh keys with fingerprint
       - add_ssh_keys:
           fingerprints: ["81:5f:4b:af:92:fc:3e:bd:f5:bc:d3:34:a7:e2:c2:0b"]
-      # attach workspace
       - attach_workspace:
           at: ~/
+      # Installing Dependencies
       - run:
           name: Install gzip tar curl
           command: |
@@ -338,22 +394,31 @@ jobs:
             echo "Contents  of the inventory.txt file is -------"
             cat inventory.txt
             ansible-playbook -i inventory.txt deploy-backend.yml
+      # Install AWS CLI on failure (to use it in destroying the stacks)
       - run:
           name: Install awscli for destroy-environment in case of job failure
           when: on_fail
           command: |
             pip3 install awscli
+      # Empty S3 Bucket on job failure
       - empty-s3-bucket
+      # Destroy the stacks
       - destroy-environment
+      # Revert migrations done in run migrations job
       - revert-migrations
+      # CircleCI notifies on job failure
       - slack/notify:
           event: fail
           template: basic_fail_1
+
+
   smoke-test:
     docker:
       - image: circleci/node:13.8.0
     steps:
+      # Checkout code from git
       - checkout
+      # Install AWS CLI
       - install-awscli
       - attach_workspace:
           at: .
@@ -363,13 +428,12 @@ jobs:
           command: |
            API_URL=$(<apiurl.txt)
            echo ${API_URL}
-          #if curl ${API_URL}/api/status | grep -q "ok"
-          #then
-            #exit 0
-          #else
-            #exit 1
-          #fi
-    #(curl ${API_URL}/api/status | grep -q "ok"  && exit 0) || (exit 1)
+           if curl -s -v --connect-timeout 30 --retry-connrefused 5 ${API_URL}/api/status | grep -q "ok"
+           then
+            exit 0
+           else
+            exit 1
+           fi
             
       - run:
           name: Frontend smoke test.
@@ -381,12 +445,18 @@ jobs:
             else
                 exit 1
             fi
+      # Empty S3 Bucket on job failure
       - empty-s3-bucket
+      # Destroy the stacks
       - destroy-environment
+      # Revert migrations done in run migrations job
       - revert-migrations
+      # CircleCI notifies on job failure
       - slack/notify:
           event: fail
           template: basic_fail_1
+
+
   cloudfront-update:
     docker:
       # Docker image here that supports AWS CLI
@@ -394,6 +464,7 @@ jobs:
     steps:
       # Checkout code from git
       - checkout
+      # Install AWS CLI
       - install-awscli
       - run:
           name: Update cloudfront distribution
@@ -403,19 +474,25 @@ jobs:
               --stack-name InitialStack \
               --parameter-overrides WorkflowID="udapeople-${CIRCLE_WORKFLOW_ID:0:7}" \
               --tags project=udapeople
+      # Empty S3 Bucket on job failure
       - empty-s3-bucket
+      # Destroy the stacks
       - destroy-environment
+      # Revert migrations done in run migrations job
       - revert-migrations
+      # CircleCI notifies on job failure
       - slack/notify:
           event: fail
           template: basic_fail_1
+
+
   cleanup:
       docker:
-        # Docker image here
         - image: circleci/node:13.8.0
       steps:
         # Checkout code from git
         - checkout
+        # Install AWS CLI
         - install-awscli
         - run:
             name: Get old stack workflow id and Remove old stacks and files
@@ -441,6 +518,7 @@ jobs:
               else
                 echo "No stacks or bucket to clean up."
               fi
+        # CircleCI notifies on job failure
         - slack/notify:
             event: fail
             template: basic_fail_1
