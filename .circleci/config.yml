@@ -322,12 +322,13 @@ jobs:
       - run:
           name: Get Backend URL (API URL)
           command: |
-            BACKEND_IP_BASE_URL=$(aws ec2 describe-instances \
-              --query 'Reservations[*].Instances[*].PublicIpAddress' \
+            BACKEND_BASE_URL=$(aws ec2 describe-instances \
+              --query 'Reservations[*].Instances[*].PublicDnsName' \
               --filters "Name=tag:project,Values=udapeople-backend" \
               --output text)
-            export API_URL="http://${BACKEND_IP_BASE_URL}:3030"
-            echo "http://${BACKEND_IP_BASE_URL}:3030" > frontend/apiurl.txt
+            export API_URL="http://${BACKEND_BASE_URL}:3030"
+            echo ${API_URL}
+            echo "http://${BACKEND_BASE_URL}:3030" > frontend/apiurl.txt
             cat frontend/apiurl.txt
       - persist_to_workspace:
           root: .
