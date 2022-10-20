@@ -470,11 +470,22 @@ jobs:
       - run:
           name: Update cloudfront distribution
           command: |
+            export BLUE_ID=$(aws cloudformation \
+              list-exports --query "Exports[?Name==\`WorkflowID\`].Value" \
+              --no-paginate --output text)
+
+            echo "BLUE_ID is ${BLUE_ID}"
+            echo $BLUE_ID > .circleci/files/blue_id.txt
+
             aws cloudformation deploy \
               --template-file .circleci/files/cloudfront.yml \
               --stack-name InitialStack \
               --parameter-overrides WorkflowID="udapeople-${CIRCLE_WORKFLOW_ID:0:7}" \
               --tags project=udapeople
+      - persist_to_workspace:
+          root: ~/
+          paths:
+            - project/.circleci/files/blue_id.txt
       # Empty S3 Bucket on job failure
       - empty-s3-bucket
       # Destroy the stacks
@@ -495,29 +506,34 @@ jobs:
         - checkout
         # Install AWS CLI
         - install-awscli
+        - attach_workspace:
+            at: ~/
         - run:
             name: Get old stack workflow id and Remove old stacks and files
+            working_directory: .circleci/files
             command: |
-              export OldWorkflowID=$(aws cloudformation \
-                      list-exports --query "Exports[?Name==\`WorkflowID\`].Value" \
-                      --no-paginate --output text)
-              echo OldWorkflowID is "${OldWorkflowID}"
-              echo CIRCLE_WORKFLOW_ID is "${CIRCLE_WORKFLOW_ID:0:7}"
+              export BLUE_ID=`cat blue_id.txt`
+              echo "BLUE_ID is ${BLUE_ID}"
+              
+              echo GREEN_ID the CIRCLE_WORKFLOW_ID is "udapeople - ${CIRCLE_WORKFLOW_ID:0:7}"
   
               export STACKS=($(aws cloudformation list-stacks --query "StackSummaries[*].StackName" \
                       --stack-status-filter CREATE_COMPLETE --no-paginate --output text)) 
-              echo Stack names: "${STACKS[@]}"
+              echo Stack names @: "${STACKS[@]}"
 
-
-              if [[ "udapeople-${CIRCLE_WORKFLOW_ID:0:7}" != "${OldWorkflowID}" ]]
+              if [[ -z "${STACKS[*]}" ]] || [[ -z "${BLUE_ID}" ]]
               then
-                echo "Cleaning up..."
-                aws s3 rm "s3://${OldWorkflowID}" --recursive
-                aws cloudformation delete-stack --stack-name "udapeople-frontend-${OldWorkflowID}" ;
-                aws cloudformation delete-stack --stack-name "udapeople-backend-${OldWorkflowID}"
-                echo "Done!"
-              else
-                echo "No stacks or bucket to clean up."
+                echo "Nothing to clean up!"
+                exit 0
+              fi
+
+              if [[ "${STACKS[@]}" =~ "${BLUE_ID}" ]]
+              then
+                echo "Cleaning up ....."
+                aws s3 rm s3://${BLUE_ID} --recursive
+                aws cloudformation delete-stack --stack-name udapeople-backend-${BLUE_ID}
+                aws cloudformation delete-stack --stack-name udapeople-frontend-${BLUE_ID}
+                echo "CLEAN."
               fi
         # CircleCI notifies on job failure
         - slack/notify:
