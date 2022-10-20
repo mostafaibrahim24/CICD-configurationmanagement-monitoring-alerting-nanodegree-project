@@ -220,7 +220,7 @@ jobs:
           command: |
             aws ec2 describe-instances \
               --query 'Reservations[*].Instances[*].PublicIpAddress' \
-              --filters "Name=tag:project,Values=udapeople-backend" \
+              --filters "Name=tag:Name,Values=backend-${CIRCLE_WORKFLOW_ID:0:7}" \
               --output text >> .circleci/ansible/inventory.txt
       - persist_to_workspace:
           root: ~/
@@ -395,6 +395,7 @@ jobs:
             echo "Contents  of the inventory.txt file is -------"
             cat inventory.txt
             ansible-playbook -i inventory.txt deploy-backend.yml
+            echo "[web]" > inventory.txt
       # Install AWS CLI on failure (to use it in destroying the stacks)
       - run:
           name: Install awscli for destroy-environment in case of job failure
@@ -521,18 +522,18 @@ jobs:
                       --stack-status-filter CREATE_COMPLETE --no-paginate --output text)) 
               echo Stack names @: "${STACKS[@]}"
 
-              if [[ -z "${STACKS[*]}" ]] || [[ -z "${BLUE_ID}" ]]
+              if [[ -z "${STACKS[*]}" ]] || [[ -z "${BLUE_ID:10:16}" ]]
               then
                 echo "Nothing to clean up!"
                 exit 0
               fi
 
-              if [[ "${STACKS[@]}" =~ "${BLUE_ID}" ]]
+              if [[ "${STACKS[@]}" =~ "${BLUE_ID:10:16}" ]]
               then
                 echo "Cleaning up ....."
                 aws s3 rm s3://${BLUE_ID} --recursive
-                aws cloudformation delete-stack --stack-name udapeople-backend-${BLUE_ID}
-                aws cloudformation delete-stack --stack-name udapeople-frontend-${BLUE_ID}
+                aws cloudformation delete-stack --stack-name udapeople-backend-${BLUE_ID:10:16}
+                aws cloudformation delete-stack --stack-name udapeople-frontend-${BLUE_ID:10:16}
                 echo "CLEAN."
               fi
         # CircleCI notifies on job failure
