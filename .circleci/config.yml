@@ -328,12 +328,12 @@ jobs:
               --output text)
             export API_URL="http://${BACKEND_BASE_URL}:3030"
             echo ${API_URL}
-            echo "http://${BACKEND_BASE_URL}:3030" > frontend/apiurl.txt
-            cat frontend/apiurl.txt
+            echo "http://${BACKEND_BASE_URL}:3030" > frontend/.env
+            cat frontend/.env
       - persist_to_workspace:
           root: .
           paths:
-            - frontend/apiurl.txt
+            - frontend/.env
       - run:
           name: Deploy frontend objects
           command: |
@@ -427,7 +427,7 @@ jobs:
           name: Get backend url and smoke test backend
           working_directory: ./frontend
           command: |
-           API_URL=$(<apiurl.txt)
+           API_URL=$(<.env)
            echo ${API_URL}
            if curl -s -v --connect-timeout 30 --retry-connrefused 5 ${API_URL}/api/status | grep -q "ok"
            then
