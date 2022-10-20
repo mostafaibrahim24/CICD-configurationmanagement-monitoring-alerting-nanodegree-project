@@ -1,54 +1,46 @@
-We are archiving this repository because we do not want learners to push personal development to the current repository. If you have any issues or suggestions to make, feel free to:
-- Utilize the https://knowledge.udacity.com/ forum to seek help on content-specific issues.
-- [Submit a support ticket](https://udacity.zendesk.com/hc/en-us/requests/new) along with the link to your forked repository. 
-- If you are an enterprise learner, please [Submit a support ticket here](https://udacityenterprise.zendesk.com/hc/en-us/requests/new?ticket_form_id=360000279131)
+## Advanced Cloud DevOps Nanodegree Project 3:
+# Give your Application Auto-Deploy Superpowers
 
-## Give your Application Auto-Deploy Superpowers
+### Learning objectives:
 
-In this project, you will prove your mastery of the following learning objectives:
-
-- Explain the fundamentals and benefits of CI/CD to achieve, build, and deploy automation for cloud-based software products.
+- Explain the benefits of CI/CD to achieve, build, and deploy automation for cloud-based software products.
 - Utilize Deployment Strategies to design and build CI/CD pipelines that support Continuous Delivery processes.
 - Utilize a configuration management tool to accomplish deployment to cloud-based servers.
 - Surface critical server errors for diagnosis using centralized structured logging.
 
-![Diagram of CI/CD Pipeline we will be building.](udapeople.png)
+## CI/CD Pipeline Diagram
+<img src="pipeline.png" alt="diagram" width="600"/>
 
-### Instructions
+___
+### Project specifications
 
-* [Selling CI/CD](instructions/0-selling-cicd.md)
-* [Getting Started](instructions/1-getting-started.md)
-* [Deploying Working, Trustworthy Software](instructions/2-deploying-trustworthy-code.md)
-* [Configuration Management](instructions/3-configuration-management.md)
-* [Turn Errors into Sirens](instructions/4-turn-errors-into-sirens.md)
+  | Specifications | Proof | Meets specifications |
+  |---|---|---|
+  | Job failed because of compile errors. | [SCREENSHOT01](./SCREENSHOT01.png) | ✓ |
+  | Job failed because of unit tests (backend). | [SCREENSHOT02-BE](./SCREENSHOT02-BE.png) | ✓ |
+  | Job failed because of unit tests (frontend). | [SCREENSHOT02-FE](./SCREENSHOT02-FE.png) | ✓ |
+  | Job that failed because of vulnerable packages (backend). | [SCREENSHOT03-BE](./SCREENSHOT03-BE.png) | ✓ |
+  | Job that failed because of vulnerable packages (frontend). | [SCREENSHOT03-FE](./SCREENSHOT03-FE.png) | ✓ |
+  | An alert from one of your failed builds (slack). | [SCREENSHOT04-SLACK](./SCREENSHOT04-SLACK.png) | ✓ |
+  | An alert from one of your failed builds (email). | [SCREENSHOT04-EMAIL](./SCREENSHOT04-EMAIL.png) | ✓ |
+  | Appropriate job failure for infrastructure creation. | [SCREENSHOT05](./SCREENSHOT05.png) | ✓ |
+  | Appropriate job failure for the smoke test job. | [SCREENSHOT06](./SCREENSHOT06.png) | ✓ |
+  | Successful rollback after a failed smoke test. | [SCREENSHOT07](./SCREENSHOT07.png) | ✓ |  
+  | Successful promotion job. | [SCREENSHOT08](./SCREENSHOT08.png) | ✓ |
+  | Successful cleanup job. | [SCREENSHOT09](./SCREENSHOT09.png) | ✓ |
+  | Only deploy on pushed to `master` branch. | [SCREENSHOT10](./SCREENSHOT10.png) | ✓ |
+  | Provide a screenshot of a graph of your EC2 instance including available memory, available disk space, and CPU usage.| [Memory](./SCREENSHOT11-MEMORY.png), [Disk](udacity/submission/SCREENSHOT11-DISK.png), [CPU](/SCREENSHOT11-CPU.png) | ✓ |
+  | Provide a screenshot of an alert that was sent by Prometheus. | [SCREENSHOT12](./SCREENSHOT12.png) | ✓ |
+  | Public Url to GitHub repository (not private) | [URL01](https://github.com/mostafaibrahim24/cicd-configurationmanagement-monitoring-logging-nanodegree-project) | ✓ |
+  | Public URL for your S3 Bucket (aka, your green candidate front-end) | [URL02](http://udapeople-5a2b048.s3-website-us-east-1.amazonaws.com/#/employees) | ✓ |
+  | Provide a screenshot showing the evidence of deployed and functioning front-end application (aka, your production front-end) S3 Bucket | [URL03_SCREENSHOT_S3](./URL03_SCREENSHOT.png) | ✓ |
+  | Provide a screenshot showing the evidence of deployed and functioning front-end application (aka, your production front-end) Cloudfront | [URL03_SCREENSHOT_CF](./SCREENSHOT-CF-URL.png) | ✓ |
+  | Screenshot of cloudfront distribution being up. | [SCREENSHOT-CF](./SCREENSHOT_cloudfront_up_console.png) | ✓ |
+  | Provide a screenshot showing the evidence of a healthy backend application. The backend endpoint status should show a healthy response. | [URL04_SCREENSHOT](./URL04_SCREENSHOT.png) | ✓ |
+  | Provide a screenshot of your Prometheus server showing UP state. | [URL05_SCREENSHOT](./URL05_SCREENSHOT.png) | ✓ |
 
-### Project Submission
-
-For your submission, please submit the following:
-
-- A text file named `urls.txt` including:
-  1. Public Url to GitHub repository (not private) [URL01]
-  1. Public URL for your S3 Bucket (aka, your green candidate front-end) [URL02]
-  1. Public URL for your CloudFront distribution (aka, your blue production front-end) [URL03]
-  1. Public URLs to deployed application back-end in EC2 [URL04]
-  1. Public URL to your Prometheus Server [URL05]
-- Your screenshots in JPG or PNG format, named using the screenshot number listed in the instructions. These screenshots should be included in your code repository in the root folder.
-  1. Job failed because of compile errors. [SCREENSHOT01]
-  1. Job failed because of unit tests. [SCREENSHOT02]
-  1. Job that failed because of vulnerable packages. [SCREENSHOT03]
-  1. An alert from one of your failed builds. [SCREENSHOT04]
-  1. Appropriate job failure for infrastructure creation. [SCREENSHOT05]
-  1. Appropriate job failure for the smoke test job. [SCREENSHOT06]
-  1. Successful rollback after a failed smoke test. [SCREENSHOT07]  
-  1. Successful promotion job. [SCREENSHOT08]
-  1. Successful cleanup job. [SCREENSHOT09]
-  1. Only deploy on pushed to `master` branch. [SCREENSHOT10]
-  1. Provide a screenshot of a graph of your EC2 instance including available memory, available disk space, and CPU usage. [SCREENSHOT11]
-  1. Provide a screenshot of an alert that was sent by Prometheus. [SCREENSHOT12]
-
-- Your presentation should be in PDF format named "presentation.pdf" and should be included in your code repository root folder. 
-
-Before you submit your project, please check your work against the project rubric. If you haven’t satisfied each criterion in the rubric, then revise your work so that you have met all the requirements. 
+- Your presentation should be in PDF format and named [presentation.pdf](./presentation.pdf). ✓
+- Note that the URLs are broken now, because the infrastructure was destroyed after completing the project.
 
 ### Built With
 
