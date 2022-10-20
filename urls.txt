@@ -1,5 +1,4 @@
 [URL01]
 https://github.com/mostafaibrahim24/cicd-configurationmanagement-monitoring-logging-nanodegree-project
 [URL02]
-http://udapeople-17f5387.s3-website-us-east-1.amazonaws.com/#/employees
-
+http://udapeople-5a2b048.s3-website-us-east-1.amazonaws.com/#/employees
