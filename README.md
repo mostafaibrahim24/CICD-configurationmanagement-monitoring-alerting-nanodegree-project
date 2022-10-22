@@ -26,7 +26,7 @@
 - [Circle CI](www.circleci.com) - Cloud-based CI/CD service
 - [Amazon AWS](https://aws.amazon.com/) - Cloud services
 - [AWS CLI](https://aws.amazon.com/cli/) - Command-line tool for AWS
-- [CloudFormation](https://aws.amazon.com/cloudformation/) - Infrastrcuture as code
+- [CloudFormation](https://aws.amazon.com/cloudformation/) - IaC
 - [Ansible](https://www.ansible.com/) - Configuration management tool
 - [Prometheus](https://prometheus.io/) - Monitoring tool
 ___
@@ -57,7 +57,7 @@ ___
   | Provide a screenshot showing the evidence of a healthy backend application. The backend endpoint status should show a healthy response. | [URL04_SCREENSHOT](./screenshots/URL04_SCREENSHOT.png) | ✓ |
   | Provide a screenshot of your Prometheus server showing UP state. | [URL05_SCREENSHOT](./screenshots/URL05_SCREENSHOT.png) | ✓ |
 
-- Your presentation should be in PDF format and named [presentation.pdf](./presentation.pdf). ✓
+- CI/CD presentation (What is CI/CD? and why do we need it?) [presentation.pdf](./presentation.pdf). ✓
 - Note that the URLs are broken now, because the infrastructure was destroyed after completing the project.
 
 
