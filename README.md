@@ -11,7 +11,7 @@
 - Surface critical server errors for diagnosis using centralized structured logging.
 
 ## CI/CD Pipeline Diagram
-<p style="text-align:center;"> <img src="./images/pipeline.png" alt="diagram" width="500"/>
+<p style="text-align:center;"> <img src="./images/pipeline.png" alt="diagram" width="600"/>
 </p>
 
 ### Built With
