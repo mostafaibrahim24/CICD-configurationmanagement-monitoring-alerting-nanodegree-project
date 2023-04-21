@@ -1,14 +1,12 @@
 ## Advanced Cloud DevOps Nanodegree Project 3:
-# Give your Application Auto-Deploy Superpowers
-<p style="text-align:center;"> <img src="./images/udapeople.png" alt="logo" width="200"/>
+<p style="text-align:center;"> <img src="https://user-images.githubusercontent.com/78238174/233640000-3a1cdd1d-9151-4068-a98b-4a4c9138bda0.png" alt="logo" width="270"/>
 </p>
 
-### Learning objectives:
 
-- Explain the benefits of CI/CD to achieve, build, and deploy automation for cloud-based software products.
-- Utilize Deployment Strategies to design and build CI/CD pipelines that support Continuous Delivery processes.
-- Utilize a configuration management tool to accomplish deployment to cloud-based servers.
-- Surface critical server errors for diagnosis using centralized structured logging.
+
+- Built a pipeline using CircleCI which includes building, running unit tests, analyzing and scanning for security vulnerabilities in dependencies, creating the "Green" infrastructure and configuring it, deployment,migrating the database, deployment, running automated smoke tests, updating the CloudFront distribution (Blue-Green Strategy), and cleaning up the "Blue" infrastructure.
+- Used Ansible to manage server configurations.
+- Set up Prometheus to monitor resources and manage alerts by notifying the Udapeople team on a dedicated Slack channel
 
 ## CI/CD Pipeline Diagram
 <p style="text-align:center;"> <img src="./images/pipeline.png" alt="diagram" width="600"/>
