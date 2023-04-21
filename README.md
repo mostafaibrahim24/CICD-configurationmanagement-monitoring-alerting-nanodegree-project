@@ -2,7 +2,7 @@
 <p style="text-align:center;"> <img src="https://user-images.githubusercontent.com/78238174/233640000-3a1cdd1d-9151-4068-a98b-4a4c9138bda0.png" alt="logo" width="270"/>
 </p>
 
-
+### Description:
 
 - Built a pipeline using CircleCI which includes building, running unit tests, analyzing and scanning for security vulnerabilities in dependencies, creating the "Green" infrastructure and configuring it, deployment,migrating the database, deployment, running automated smoke tests, updating the CloudFront distribution (Blue-Green Strategy), and cleaning up the "Blue" infrastructure.
 - Used Ansible to manage server configurations.
